@@ -138,9 +138,76 @@ export function factsSignature(text: string): string {
   return JSON.stringify([numbers, quotes]);
 }
 
-/** Accepte une version relue seulement si le fond est identique et la longueur comparable. */
+// Mots qui portent le sens d'une affirmation : une relecture ne doit jamais les ajouter ni les retirer.
+const PROTECTED_WORDS = new Set(
+  "ne n pas non jamais aucun aucune ni sans rien guere plus exact exacte faux fausse trompeur trompeuse inverifiable plutot verdict".split(
+    " ",
+  ),
+);
+
+function wordKey(token: string): string {
+  return normalize(token).replace(/\s+/g, "");
+}
+
+function isProtected(token: string): boolean {
+  if (/\d|\[\d/.test(token)) return true;
+  return normalize(token)
+    .split(" ")
+    .some((part) => PROTECTED_WORDS.has(part));
+}
+
+/** Différences mot à mot (plus longue sous-séquence commune), regroupées en blocs contigus. */
+function wordHunks(a: string[], b: string[]): { removed: string[]; added: string[] }[] {
+  const n = a.length;
+  const m = b.length;
+  const lcs = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
+  for (let i = n - 1; i >= 0; i--)
+    for (let j = m - 1; j >= 0; j--)
+      lcs[i][j] = a[i] === b[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
+  const hunks: { removed: string[]; added: string[] }[] = [];
+  let current: { removed: string[]; added: string[] } | null = null;
+  let i = 0;
+  let j = 0;
+  while (i < n || j < m) {
+    if (i < n && j < m && a[i] === b[j]) {
+      current = null;
+      i++;
+      j++;
+      continue;
+    }
+    if (!current) hunks.push((current = { removed: [], added: [] }));
+    if (j < m && (i >= n || lcs[i][j + 1] >= lcs[i + 1][j])) current.added.push(b[j++]);
+    else current.removed.push(a[i++]);
+  }
+  return hunks;
+}
+
+/**
+ * Accepte une version relue seulement si elle ne fait que de petites retouches locales :
+ * fond identique (chiffres, citations, guillemets, ligne de verdict), aucune négation ni mot
+ * de verdict touché, aucun nom propre remplacé, et peu de mots modifiés au total.
+ */
 export function acceptProofread(original: string, revised: string): boolean {
   if (!revised.trim()) return false;
   const ratio = revised.length / Math.max(original.length, 1);
-  return ratio > 0.85 && ratio < 1.15 && factsSignature(original) === factsSignature(revised);
+  if (ratio <= 0.85 || ratio >= 1.15) return false;
+  if (factsSignature(original) !== factsSignature(revised)) return false;
+  const verdict = (t: string) => t.match(/verdict[^\n]*/i)?.[0] ?? "";
+  if (verdict(original) !== verdict(revised)) return false;
+
+  const a = original.split(/\s+/).filter(Boolean);
+  const b = revised.split(/\s+/).filter(Boolean);
+  const hunks = wordHunks(a, b);
+  const changed = hunks.reduce((acc, h) => acc + h.removed.length + h.added.length, 0);
+  if (changed > Math.max(6, Math.round(a.length * 0.04))) return false;
+
+  return hunks.every(({ removed, added }) => {
+    if (removed.length > 3 || added.length > 3) return false;
+    // Simple découpage ou recollage de mots (« LeRN » en « Le RN ») : toujours acceptable.
+    if (removed.join("") === added.join("")) return true;
+    if ([...removed, ...added].some(isProtected)) return false;
+    // Un mot à majuscule (nom propre, parti) ne peut pas disparaître ni être remplacé.
+    const addedKeys = new Set(added.map(wordKey));
+    return removed.every((w) => !/^[«(]?[A-ZÀ-Ý]/.test(w) || addedKeys.has(wordKey(w)));
+  });
 }

@@ -50,16 +50,30 @@ describe("stripCjk", () => {
 });
 
 describe("acceptProofread", () => {
-  const original = "Le RN propose 62 ans [9]. Elle a dit « en sortir totalement » [8]. La réforme Retirement est progressive.";
-  it("accepte une correction de forme", () => {
-    expect(acceptProofread(original, original.replace("Retirement", "des retraites"))).toBe(true);
+  const original =
+    "**Verdict : Faux**\n\nLe RN ne propose pas la retraite à 60 ans pour tous [9]. Marine Le Pen a dit « 62 ans » [8]. Les beginnings professionnels comptent. LeRN maintient sa ligne et la réforme reste progressive selon les sources disponibles.";
+  it("accepte une correction de forme locale", () => {
+    expect(acceptProofread(original, original.replace("beginnings", "débuts"))).toBe(true);
+    expect(acceptProofread(original, original.replace("LeRN", "Le RN"))).toBe(true);
   });
   it("rejette une modification de chiffre, de citation ou de guillemets", () => {
-    expect(acceptProofread(original, original.replace("62", "60"))).toBe(false);
+    expect(acceptProofread(original, original.replace("60", "65"))).toBe(false);
     expect(acceptProofread(original, original.replace("[9]", "[3]"))).toBe(false);
-    expect(acceptProofread(original, original.replace("totalement", "progressivement"))).toBe(false);
+    expect(acceptProofread(original, original.replace("« 62 ans »", "« 64 ans »"))).toBe(false);
   });
-  it("rejette une réécriture trop longue ou vide", () => {
+  it("rejette un changement de verdict ou de négation", () => {
+    expect(acceptProofread(original, original.replace("Verdict : Faux", "Verdict : Exact"))).toBe(false);
+    expect(acceptProofread(original, original.replace("ne propose pas", "propose"))).toBe(false);
+  });
+  it("rejette le remplacement d'un nom propre", () => {
+    expect(acceptProofread(original, original.replace("Marine Le Pen", "Marine Tondelier"))).toBe(false);
+  });
+  it("rejette une réécriture trop large, trop longue ou vide", () => {
+    const rewritten = original.replace(
+      "la réforme reste progressive selon les sources disponibles",
+      "la réforme demeure graduelle d'après les éléments consultés ici",
+    );
+    expect(acceptProofread(original, rewritten)).toBe(false);
     expect(acceptProofread(original, `${original} ${original}`)).toBe(false);
     expect(acceptProofread(original, "")).toBe(false);
   });
