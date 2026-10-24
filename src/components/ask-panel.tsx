@@ -2,19 +2,12 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ExternalIcon, StopIcon } from "./icons";
 import { SourceMeta } from "./source-badge";
 import type { AskEvent, ContextSource } from "@/lib/types";
-
-const SUGGESTIONS = [
-  "Qui est officiellement candidat ?",
-  "Que proposent les partis sur la retraite ?",
-  "Quels programmes baissent la TVA sur l'énergie ?",
-  "Quelles mesures sur le logement ?",
-];
 
 const TYPE_LABELS: Record<ContextSource["type"], string> = {
   fiche: "Données vérifiées",
@@ -36,30 +29,10 @@ function linkCitations(text: string): string {
 }
 
 /** Zone de réponse de l'accueil : pilotée par le paramètre ?q= que remplit la barre de recherche. */
-export function AskPanel() {
+export function AskPanel({ suggestions }: { suggestions: ReactNode }) {
   const q = useSearchParams().get("q")?.trim() ?? "";
-  if (!q) return <Suggestions />;
+  if (!q) return suggestions;
   return <Answer key={q} question={q} />;
-}
-
-function Suggestions() {
-  return (
-    <ul
-      aria-label="Exemples de questions"
-      className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-3 py-3 [scrollbar-width:none] sm:px-4 lg:flex-wrap [&::-webkit-scrollbar]:hidden"
-    >
-      {SUGGESTIONS.map((s) => (
-        <li key={s} className="shrink-0">
-          <Link
-            href={`/?q=${encodeURIComponent(s)}`}
-            className="flex h-9 items-center rounded-full border border-rule px-3 text-sm whitespace-nowrap text-graphite hover:border-ink hover:text-ink"
-          >
-            {s}
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
 }
 
 function Answer({ question }: { question: string }) {
@@ -105,7 +78,8 @@ function Answer({ question }: { question: string }) {
             } else if (event.type === "delta") {
               setStatus(null);
               setAnswer((a) => a + event.text);
-            } else if (event.type === "done") setInvalid(event.invalidCitations);
+            } else if (event.type === "replace") setAnswer(event.text);
+            else if (event.type === "done") setInvalid(event.invalidCitations);
             else if (event.type === "error") setError(event.message);
           }
         }

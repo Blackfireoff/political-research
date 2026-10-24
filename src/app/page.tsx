@@ -3,6 +3,7 @@ import { AskPanel } from "@/components/ask-panel";
 import { Candidates } from "@/components/candidates";
 import { HomeSections } from "@/components/home-sections";
 import { NewsFeed } from "@/components/news-feed";
+import { SuggestedQuestions } from "@/components/suggested-questions";
 import { parties } from "@/lib/data";
 import { getNews } from "@/lib/news";
 
@@ -21,8 +22,14 @@ async function News() {
 export default function Home() {
   return (
     <>
-      <Suspense fallback={<div className="h-15" />}>
-        <AskPanel />
+      <Suspense fallback={null}>
+        <AskPanel
+          suggestions={
+            <Suspense fallback={null}>
+              <SuggestedQuestions />
+            </Suspense>
+          }
+        />
       </Suspense>
       <HomeSections
         news={

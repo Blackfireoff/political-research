@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chunkText, createThinkStripper, extractCitations, normalize, tokenize } from "./text";
+import { acceptProofread, chunkText, createThinkStripper, extractCitations, normalize, stripCjk, tokenize } from "./text";
 
 describe("normalize / tokenize", () => {
   it("retire accents, casse et mots vides", () => {
@@ -39,5 +39,28 @@ describe("createThinkStripper", () => {
   it("laisse passer un texte sans balise", () => {
     const strip = createThinkStripper();
     expect(strip("a < b et c")).toBe("a < b et c");
+  });
+});
+
+describe("stripCjk", () => {
+  it("retire les caractères parasites sans toucher au français", () => {
+    expect(stripCjk("la proposition银行存款 de 2024 est rejetée")).toBe("la proposition de 2024 est rejetée");
+    expect(stripCjk("Élection présidentielle, « 60 ans »")).toBe("Élection présidentielle, « 60 ans »");
+  });
+});
+
+describe("acceptProofread", () => {
+  const original = "Le RN propose 62 ans [9]. Elle a dit « en sortir totalement » [8]. La réforme Retirement est progressive.";
+  it("accepte une correction de forme", () => {
+    expect(acceptProofread(original, original.replace("Retirement", "des retraites"))).toBe(true);
+  });
+  it("rejette une modification de chiffre, de citation ou de guillemets", () => {
+    expect(acceptProofread(original, original.replace("62", "60"))).toBe(false);
+    expect(acceptProofread(original, original.replace("[9]", "[3]"))).toBe(false);
+    expect(acceptProofread(original, original.replace("totalement", "progressivement"))).toBe(false);
+  });
+  it("rejette une réécriture trop longue ou vide", () => {
+    expect(acceptProofread(original, `${original} ${original}`)).toBe(false);
+    expect(acceptProofread(original, "")).toBe(false);
   });
 });

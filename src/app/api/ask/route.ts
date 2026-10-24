@@ -1,6 +1,6 @@
 import { buildContext, systemPrompt, userPrompt } from "@/lib/context";
-import { streamCompletion } from "@/lib/llm";
-import { extractCitations } from "@/lib/text";
+import { proofread, streamCompletion } from "@/lib/llm";
+import { acceptProofread, extractCitations, stripCjk } from "@/lib/text";
 import type { AskEvent } from "@/lib/types";
 
 export const maxDuration = 180;
@@ -29,15 +29,30 @@ export async function POST(request: Request) {
 
         const today = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
         let answer = "";
-        for await (const text of streamCompletion(
+        for await (const chunk of streamCompletion(
           [
             { role: "system", content: systemPrompt(today) },
             { role: "user", content: userPrompt(question, ctx) },
           ],
           request.signal,
         )) {
+          const text = stripCjk(chunk);
           answer += text;
-          send({ type: "delta", text });
+          if (text) send({ type: "delta", text });
+        }
+
+        // Le modèle glisse parfois des mots parasites : relecture de forme, rejetée si le fond change.
+        if (answer && process.env.MINIMAX_PROOFREAD !== "false") {
+          send({ type: "status", message: "Relecture…" });
+          try {
+            const revised = stripCjk(await proofread(answer));
+            if (revised !== answer && acceptProofread(answer, revised)) {
+              answer = revised;
+              send({ type: "replace", text: revised });
+            }
+          } catch (err) {
+            console.warn("[ask] relecture impossible", err instanceof Error ? err.message : err);
+          }
         }
         const valid = new Set(ctx.sources.map((s) => s.n));
         send({ type: "done", invalidCitations: extractCitations(answer).filter((n) => !valid.has(n)) });

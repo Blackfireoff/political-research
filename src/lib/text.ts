@@ -122,3 +122,25 @@ export function stripHtml(html: string): string {
     .replace(/\s+/g, " ")
     .trim();
 }
+
+/** Retire les caractères chinois, japonais ou coréens parasites qu'un modèle peut glisser dans une réponse française. */
+export function stripCjk(text: string): string {
+  return text.replace(/[　-ヿ㐀-䶿一-鿿가-힯＀-￯]+/g, "").replace(/ {2,}/g, " ");
+}
+
+/**
+ * Empreinte factuelle d'un texte : nombres, citations [n] et passages entre guillemets.
+ * Une relecture qui modifie cette empreinte a changé le fond et doit être rejetée.
+ */
+export function factsSignature(text: string): string {
+  const numbers = text.match(/\d+(?:[.,]\d+)?/g) ?? [];
+  const quotes = (text.match(/«[^»]*»/g) ?? []).map((q) => q.replace(/\s+/g, " "));
+  return JSON.stringify([numbers, quotes]);
+}
+
+/** Accepte une version relue seulement si le fond est identique et la longueur comparable. */
+export function acceptProofread(original: string, revised: string): boolean {
+  if (!revised.trim()) return false;
+  const ratio = revised.length / Math.max(original.length, 1);
+  return ratio > 0.85 && ratio < 1.15 && factsSignature(original) === factsSignature(revised);
+}

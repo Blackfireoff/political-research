@@ -43,3 +43,40 @@ export async function* streamCompletion(
     }
   }
 }
+
+export function llmConfigured(): boolean {
+  return Boolean(process.env.MINIMAX_API_KEY);
+}
+
+/** Appel simple (sans streaming) pour les tâches courtes ; renvoie le texte de la réponse. */
+export async function complete(
+  messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[],
+  { effort = "low", maxTokens = 4000 }: { effort?: string; maxTokens?: number } = {},
+): Promise<string> {
+  const params = {
+    model: MODEL,
+    messages,
+    max_completion_tokens: maxTokens,
+    reasoning_split: true,
+    reasoning_effort: effort,
+  } as unknown as OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming;
+  const res = await client().chat.completions.create(params, { timeout: 60_000 });
+  const strip = createThinkStripper();
+  return strip(res.choices[0]?.message?.content ?? "").trim();
+}
+
+const PROOFREAD_PROMPT = `Tu es correcteur. Le texte fourni est une réponse en français, au format Markdown, produite par un modèle de langage.
+Corrige UNIQUEMENT : fautes de frappe, mots collés ou coupés, mots dans une autre langue que le français, caractères parasites.
+Ne modifie jamais : le sens, les chiffres, les dates, les citations entre crochets comme [3], les passages entre guillemets « », la mise en forme Markdown.
+N'ajoute ni ne retire aucune information. Renvoie uniquement le texte corrigé, sans commentaire.`;
+
+/** Relecture de forme d'une réponse ; l'appelant valide que le fond est inchangé. */
+export async function proofread(text: string): Promise<string> {
+  return complete(
+    [
+      { role: "system", content: PROOFREAD_PROMPT },
+      { role: "user", content: text },
+    ],
+    { effort: "low", maxTokens: 8000 },
+  );
+}

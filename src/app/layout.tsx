@@ -36,7 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="fr" className={`${ui.variable} ${read.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
-        <header className="pt-[env(safe-area-inset-top)]">
+        <header className="border-b border-rule pt-[env(safe-area-inset-top)]">
           <div className="mx-auto flex h-12 max-w-6xl items-center justify-between gap-8 px-4 lg:h-14">
             <Link href="/" className="font-serif text-xl font-semibold tracking-tight sm:text-2xl">
               Recoupe
@@ -44,13 +44,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <TopNav />
           </div>
         </header>
-        {/* Recherche sous l'en-tête ; elle reste en haut de l'écran pendant le défilement. */}
-        <div className="sticky top-0 z-30 border-b border-rule bg-paper/95 backdrop-blur">
-          <div className="mx-auto flex max-w-3xl px-3 py-2.5 sm:px-4">
-            <Suspense fallback={<SearchBarFallback />}>
-              <SearchBar />
-            </Suspense>
-          </div>
+        {/* Recherche dans la page, sous la barre de navigation. */}
+        <div className="mx-auto flex w-full max-w-3xl px-3 pt-5 pb-3 sm:px-4 lg:pt-8">
+          <Suspense fallback={<SearchBarFallback />}>
+            <SearchBar />
+          </Suspense>
         </div>
         <main className="flex-1">{children}</main>
         <footer className="border-t border-rule pb-[calc(3.5rem+env(safe-area-inset-bottom))] lg:pb-0">

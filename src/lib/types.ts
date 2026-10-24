@@ -161,5 +161,7 @@ export type AskEvent =
   | { type: "sources"; sources: ContextSource[]; excluded: { url: string; title: string; reason: string }[] }
   | { type: "status"; message: string }
   | { type: "delta"; text: string }
+  /** Version relue de la réponse complète, qui remplace le texte diffusé. */
+  | { type: "replace"; text: string }
   | { type: "done"; invalidCitations: number[] }
   | { type: "error"; message: string };
