@@ -1,0 +1,23 @@
+{
+  "checkedOn": "2026-10-24",
+  "note": "Flux RSS testés le 2026-10-24 (HTTP 200 et éléments <item> présents). La sélection couvre des rédactions de lignes éditoriales différentes, ainsi que des médias de service public et des chaînes parlementaires.",
+  "feeds": [
+    { "id": "franceinfo", "domain": "francetvinfo.fr", "url": "https://www.francetvinfo.fr/politique.rss" },
+    { "id": "lemonde", "domain": "lemonde.fr", "url": "https://www.lemonde.fr/politique/rss_full.xml" },
+    { "id": "lefigaro", "domain": "lefigaro.fr", "url": "https://www.lefigaro.fr/rss/figaro_politique.xml" },
+    { "id": "liberation", "domain": "liberation.fr", "url": "https://www.liberation.fr/arc/outboundfeeds/rss-all/category/politique/?outputType=xml" },
+    { "id": "publicsenat", "domain": "publicsenat.fr", "url": "https://www.publicsenat.fr/feed" },
+    { "id": "lcp", "domain": "lcp.fr", "url": "https://lcp.fr/rss.xml" },
+    { "id": "humanite", "domain": "humanite.fr", "url": "https://www.humanite.fr/sections/politique/feed" },
+    { "id": "valeursactuelles", "domain": "valeursactuelles.com", "url": "https://www.valeursactuelles.com/feed" },
+    { "id": "lejdd", "domain": "lejdd.fr", "url": "https://www.lejdd.fr/rss.xml" },
+    { "id": "mediapart", "domain": "mediapart.fr", "url": "https://www.mediapart.fr/articles/feed" },
+    { "id": "20minutes", "domain": "20minutes.fr", "url": "https://www.20minutes.fr/feeds/rss-politique.xml" },
+    { "id": "lacroix", "domain": "la-croix.com", "url": "https://www.la-croix.com/RSS/UNIVERS_WFRA" },
+    { "id": "lexpress", "domain": "lexpress.fr", "url": "https://www.lexpress.fr/arc/outboundfeeds/rss/politique.xml" },
+    { "id": "marianne", "domain": "marianne.net", "url": "https://www.marianne.net/rss.xml" },
+    { "id": "bfmtv", "domain": "bfmtv.com", "url": "https://www.bfmtv.com/rss/politique/" },
+    { "id": "rfi", "domain": "rfi.fr", "url": "https://www.rfi.fr/fr/france/rss" },
+    { "id": "ouestfrance", "domain": "ouest-france.fr", "url": "https://www.ouest-france.fr/rss/france" }
+  ]
+}

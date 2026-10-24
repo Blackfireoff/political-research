@@ -1,0 +1,18 @@
+use_default_settings: true
+
+general:
+  instance_name: "recoupe-search"
+
+server:
+  # Remplacé par la variable d'environnement SEARXNG_SECRET.
+  secret_key: "changez-moi"
+  limiter: false
+  image_proxy: false
+
+search:
+  safe_search: 0
+  default_lang: "fr-FR"
+  # Le format JSON est nécessaire pour l'API utilisée par l'application.
+  formats:
+    - html
+    - json
